@@ -67,10 +67,10 @@ const ContractSidebar = ({
 }: ContractSidebarProps) => {
   return (
     <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] overflow-y-auto">
-      <Tabs defaultValue="sections" className="w-full">
+      <Tabs defaultValue="fields" className="w-full">
         <TabsList className="grid w-full grid-cols-3 gap-2">
-          <TabsTrigger value="sections">Sections</TabsTrigger>
           <TabsTrigger value="fields">Fields</TabsTrigger>
+          <TabsTrigger value="sections">Sections</TabsTrigger>
           <TabsTrigger value="parties">Parties</TabsTrigger>
         </TabsList>
         <TabsContent value="sections">
@@ -132,7 +132,7 @@ const ContractSidebar = ({
             <div className="space-y-3">
               {contract.fields.map((field, index) => (
                 <FieldEditor
-                  key={field.name || `field-${index}`} // Unique key to help React track instances
+                  key={field.name || `field-${index}`}
                   field={field}
                   index={index}
                   onChange={(updatedField) =>

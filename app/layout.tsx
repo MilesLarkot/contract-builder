@@ -29,7 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex">
-          <div className="w-[300px] bg-[#5f4a78] h-screen fixed"></div>
+          <div className="hidden sm:block w-[300px] bg-[#5f4a78] h-screen fixed"></div>
           {children}
         </div>
       </body>

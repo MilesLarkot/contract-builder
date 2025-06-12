@@ -215,10 +215,12 @@ const ContractEditor = ({
         },
       ],
     }));
+    setIsModalOpen(false); // Close modal after adding field
   };
 
   const addSuggestedField = (field: Field) => {
     setContract((prev) => ({ ...prev, fields: [...prev.fields, field] }));
+    setIsModalOpen(false); // Close modal after adding suggested field
   };
 
   const extractFieldsFromContent = (content: string) => {
@@ -256,6 +258,7 @@ const ContractEditor = ({
     if (editor) {
       editor.commands.insertContent(`<p>${section.content}</p>`);
     }
+    setIsModalOpen(false); // Close modal after adding section
   };
 
   const updateAvailableSection = (
@@ -280,6 +283,7 @@ const ContractEditor = ({
         fields: [],
       },
     ]);
+    setIsModalOpen(false); // Close modal after creating new section
   };
 
   const addParty = () => {
@@ -295,6 +299,7 @@ const ContractEditor = ({
         },
       ],
     }));
+    setIsModalOpen(false); // Close modal after adding party
   };
 
   const updateParty = (partyId: string, updatedParty: Partial<Party>) => {
@@ -328,6 +333,7 @@ const ContractEditor = ({
           : party
       ),
     }));
+    setIsModalOpen(false); // Close modal after adding party field
   };
 
   const updatePartyField = (
@@ -433,7 +439,7 @@ const ContractEditor = ({
                     <EditorToolbar editor={editor} />
                     <EditorContent
                       editor={editor}
-                      className="border rounded-md p-4 prose max-w-none"
+                      className="border rounded-md p-6 prose max-w-none"
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Use{" "}
@@ -483,17 +489,7 @@ const ContractEditor = ({
       {activeTab === "details" && (
         <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t p-2 grid grid-cols-3 gap-2 sm:hidden z-50">
           <Button
-            variant={modalTab === "sections" ? "default" : "outline"}
-            onClick={() => {
-              setModalTab("sections");
-              setIsModalOpen(true);
-            }}
-            aria-label="View Sections"
-          >
-            Sections
-          </Button>
-          <Button
-            variant={modalTab === "fields" ? "default" : "outline"}
+            variant="outline"
             onClick={() => {
               setModalTab("fields");
               setIsModalOpen(true);
@@ -503,7 +499,17 @@ const ContractEditor = ({
             Fields
           </Button>
           <Button
-            variant={modalTab === "parties" ? "default" : "outline"}
+            variant="outline"
+            onClick={() => {
+              setModalTab("sections");
+              setIsModalOpen(true);
+            }}
+            aria-label="View Sections"
+          >
+            Sections
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => {
               setModalTab("parties");
               setIsModalOpen(true);

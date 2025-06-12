@@ -82,7 +82,7 @@ const ContractEditorModal = ({
   return (
     <>
       <Dialog open={isModalOpen} onOpenChange={onModalOpenChange}>
-        <DialogContent className="sm:max-w-[425px] max-h-[80vh] p-0">
+        <DialogContent className="w-fit max-w-[90vw] max-h-[80vh] p-0">
           <DialogHeader className="p-4 pb-0">
             <div className="flex justify-between items-center">
               <DialogTitle>
