@@ -33,16 +33,28 @@ const ContractEditor = ({
   initialContract = null,
   mode,
 }: ContractEditorProps) => {
-  const [contract, setContract] = useState<Contract>(
-    initialContract || {
+  const normalizeContent = (content: string) => {
+    return content.replace(
+      /<span>([^<]+)<\/span>/g,
+      (match, fieldName) =>
+        `<span data-placeholder="${fieldName}">${fieldName}</span>`
+    );
+  };
+
+  const [contract, setContract] = useState<Contract>(() => {
+    const initial = initialContract || {
       title: DummyContractData.title,
       description: DummyContractData.description,
       content: DummyContractData.content,
       fields: DummyContractData.fields,
       sections: [],
       parties: [],
-    }
-  );
+    };
+    return {
+      ...initial,
+      content: normalizeContent(initial.content),
+    };
+  });
   const [availableSections, setAvailableSections] = useState<Section[]>([]);
   const [activeTab, setActiveTab] = useState<"details" | "preview">("details");
   const [modalTab, setModalTab] = useState<"sections" | "fields" | "parties">(
@@ -80,10 +92,10 @@ const ContractEditor = ({
   useEffect(() => {
     if (editor && contract.content && !isUpdatingFromEditor.current) {
       console.log("Setting editor content:", contract.content);
-      editor.commands.setContent(contract.content, false, {
+      editor.commands.setContent(normalizeContent(contract.content), false, {
         preserveWhitespace: true,
       });
-      setIsEditorReady(true); // Mark editor as ready after setting content
+      setIsEditorReady(true);
     }
     isUpdatingFromEditor.current = false;
   }, [contract.content, editor]);
@@ -369,7 +381,7 @@ const ContractEditor = ({
   };
 
   if (!isEditorReady) {
-    return <div>Loading editor...</div>; // Prevent rendering until editor is ready
+    return <div>Loading editor...</div>;
   }
 
   return (
@@ -421,7 +433,7 @@ const ContractEditor = ({
                     <EditorToolbar editor={editor} />
                     <EditorContent
                       editor={editor}
-                      className="border rounded-md p-2 prose max-w-none"
+                      className="border rounded-md p-4 prose max-w-none"
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Use{" "}

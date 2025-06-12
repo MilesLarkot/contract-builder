@@ -36,12 +36,17 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
     editor.chain().focus().toggleOrderedList().run();
   const toggleBlockquote = () =>
     editor.chain().focus().toggleBlockquote().run();
-  const setHeading = (level: number) =>
-    editor
-      .chain()
-      .focus()
-      .setHeading({ level: level as 1 | 2 | 3 })
-      .run();
+  const toggleHeading = (level: number) => {
+    if (editor.isActive("heading", { level })) {
+      editor.chain().focus().setParagraph().run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .setHeading({ level: level as 1 | 2 | 3 })
+        .run();
+    }
+  };
   const setFontFamily = (font: string) =>
     editor.chain().focus().setFontFamily(font).run();
   const setTextColor = (color: string) =>
@@ -96,7 +101,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           editor.isActive("heading", { level: 1 }) ? "default" : "outline"
         }
         size="sm"
-        onClick={() => setHeading(1)}
+        onClick={() => toggleHeading(1)}
         title="Heading 1"
       >
         <Heading1 className="h-4 w-4" />
@@ -106,7 +111,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           editor.isActive("heading", { level: 2 }) ? "default" : "outline"
         }
         size="sm"
-        onClick={() => setHeading(2)}
+        onClick={() => toggleHeading(2)}
         title="Heading 2"
       >
         <Heading2 className="h-4 w-4" />
@@ -116,7 +121,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           editor.isActive("heading", { level: 3 }) ? "default" : "outline"
         }
         size="sm"
-        onClick={() => setHeading(3)}
+        onClick={() => toggleHeading(3)}
         title="Heading 3"
       >
         <Heading3 className="h-4 w-4" />

@@ -12,18 +12,18 @@ export default function ContractPreview({
 }: ContractPreviewProps) {
   const replacePlaceholders = (content: string) => {
     return content.replace(
-      /<span data-placeholder="([^"]+)" class="[^"]*">[^<]*<\/span>/g,
+      /<span\s*(?:data-placeholder="([^"]+)")?\s*(?:class="[^"]*")?>[^<]*<\/span>/g,
       (match, fieldName) => {
         const field = contract.fields.find((f) => f.name === fieldName);
         if (field && field.value) {
-          return field.value; // Plain text for fields with values
+          return field.value;
         }
-        return `<span class="inline-block bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 text-sm font-medium" data-placeholder="${fieldName}">${fieldName}</span>`; // Chip for fields without values
+        return `<span class="inline-block bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 text-sm font-medium" data-placeholder="${fieldName}">${fieldName}</span>`;
       }
     );
   };
 
-  console.log(mode); // For Vercel deployment
+  console.log(mode);
 
   return (
     <Card>
