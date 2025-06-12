@@ -22,7 +22,7 @@ type ContractSidebarProps = {
   suggestedFields: Field[];
   mode: "contract" | "template";
   editor: Editor | null;
-  onContractChange: (field: string, value: any) => void;
+  onContractChange: (field: string, value: string) => void;
   onFieldChange: (index: number, updatedField: Field) => void;
   onRemoveField: (index: number) => void;
   onAddField: () => void;

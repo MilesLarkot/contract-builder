@@ -24,7 +24,7 @@ type FieldEditorProps = {
     required: boolean;
   };
   index: number;
-  onChange: (field: any) => void;
+  onChange: (field: string) => void;
   onRemove: () => void;
   content: string;
   onContentChange: (content: string) => void;
@@ -44,7 +44,7 @@ const FieldEditor = ({
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
 
-  const handleFieldChange = (key: string, value: any) => {
+  const handleFieldChange = (key: string, value: string) => {
     const updatedField = { ...field, [key]: value };
     onChange(updatedField);
   };

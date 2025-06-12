@@ -8,7 +8,7 @@ export async function GET() {
   return Response.json(contracts);
 }
 
-export async function POST(req: { json: () => any }) {
+export async function POST(req: { json: () => JSON }) {
   await connectDB();
   const data = await req.json();
   const newContract = await contract.create(data);

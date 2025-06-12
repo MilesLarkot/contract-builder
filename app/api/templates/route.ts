@@ -8,7 +8,7 @@ export async function GET() {
   return Response.json(templates);
 }
 
-export async function POST(req: { json: () => any }) {
+export async function POST(req: { json: () => JSON }) {
   await connectDB();
   const data = await req.json();
   const newTemplate = await template.create(data);

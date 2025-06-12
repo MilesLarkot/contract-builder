@@ -31,7 +31,7 @@ type ContractEditorModalProps = {
   editor: Editor | null;
   onModalOpenChange: (open: boolean) => void;
   onDrawerOpenChange: (open: boolean) => void;
-  onContractChange: (field: string, value: any) => void;
+  onContractChange: (field: string, value: string) => void;
   onFieldChange: (index: number, updatedField: Field) => void;
   onRemoveField: (index: number) => void;
   onAddField: () => void;
