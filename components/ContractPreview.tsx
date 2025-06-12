@@ -6,22 +6,27 @@ type ContractPreviewProps = {
   mode: "contract" | "template";
 };
 
-const ContractPreview = ({ contract, mode }: ContractPreviewProps) => {
+export default function ContractPreview({
+  contract,
+  mode,
+}: ContractPreviewProps) {
   const replacePlaceholders = (content: string) => {
-    return content.replace(/§\{([^}]+)\}/g, (match, fieldName) => {
-      const field = contract.fields.find((f) => f.name === fieldName);
-      return field && field.value ? field.value : fieldName;
-    });
+    return content.replace(
+      /<span data-placeholder="([^"]+)" class="[^"]*">[^<]*<\/span>/g,
+      (match, fieldName) => {
+        const field = contract.fields.find((f) => f.name === fieldName);
+        if (field && field.value) {
+          return field.value; // Plain text for fields with values
+        }
+        return `<span class="inline-block bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 text-sm font-medium" data-placeholder="${fieldName}">${fieldName}</span>`; // Chip for fields without values
+      }
+    );
   };
-  // this is just to make the mode value used once in order to be able to deploy to Vercel :p
-  console.log(mode);
+
+  console.log(mode); // For Vercel deployment
+
   return (
     <Card>
-      {/* <CardHeader>
-        <CardTitle>
-          {mode === "contract" ? "Contract Preview" : "Template Preview"}
-        </CardTitle>
-      </CardHeader> */}
       <CardContent>
         <div className="prose max-w-none mt-3">
           {contract.content ? (
@@ -38,6 +43,4 @@ const ContractPreview = ({ contract, mode }: ContractPreviewProps) => {
       </CardContent>
     </Card>
   );
-};
-
-export default ContractPreview;
+}

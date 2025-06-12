@@ -105,13 +105,12 @@ const ContractSidebar = ({
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-
                       <Textarea
                         value={section.content}
                         onChange={(e) =>
                           onUpdateSection(section.id, "content", e.target.value)
                         }
-                        placeholder="Section content with ยง{placeholders}"
+                        placeholder="Section content with <span>placeholders</span>"
                         rows={3}
                         className="flex-grow"
                       />
@@ -133,7 +132,7 @@ const ContractSidebar = ({
             <div className="space-y-3">
               {contract.fields.map((field, index) => (
                 <FieldEditor
-                  key={field.name || index}
+                  key={field.name || `field-${index}`} // Unique key to help React track instances
                   field={field}
                   index={index}
                   onChange={(updatedField) =>

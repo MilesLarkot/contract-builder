@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import EditorToolbar from "@/components/EditorToolbar";
 import DummyContractData from "@/components/DummyContractData";
 import { Contract, Section, Field, Party, PartyField } from "@/types";
 import ContractPreview from "@/components/ContractPreview";
+import PlaceholderExtension from "./ui/PlaceholderExtension";
 
 type ContractEditorProps = {
   initialContract?: Contract | null;
@@ -49,7 +50,8 @@ const ContractEditor = ({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  // const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isEditorReady, setIsEditorReady] = useState(false); // Track editor initialization
+  const isUpdatingFromEditor = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -63,12 +65,28 @@ const ContractEditor = ({
       FontFamily,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Blockquote,
+      PlaceholderExtension,
     ],
     content: contract.content,
     onUpdate: ({ editor }) => {
-      setContract((prev) => ({ ...prev, content: editor.getHTML() }));
+      isUpdatingFromEditor.current = true;
+      const html = editor.getHTML();
+      console.log("Editor updated HTML:", html);
+      setContract((prev) => ({ ...prev, content: html }));
     },
+    immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (editor && contract.content && !isUpdatingFromEditor.current) {
+      console.log("Setting editor content:", contract.content);
+      editor.commands.setContent(contract.content, false, {
+        preserveWhitespace: true,
+      });
+      setIsEditorReady(true); // Mark editor as ready after setting content
+    }
+    isUpdatingFromEditor.current = false;
+  }, [contract.content, editor]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -77,7 +95,8 @@ const ContractEditor = ({
           {
             id: "s1",
             title: "Introduction",
-            content: "This agreement is made between §{party1} and §{party2}.",
+            content:
+              "This agreement is made between <span>party1</span> and <span>party2</span>.",
             fields: [
               {
                 name: "party1",
@@ -101,7 +120,7 @@ const ContractEditor = ({
             id: "s2",
             title: "Terms & Conditions",
             content:
-              "The terms of this agreement will be valid for §{duration} months.",
+              "The terms of this agreement will be valid for <span>duration</span> months.",
             fields: [
               {
                 name: "duration",
@@ -121,12 +140,6 @@ const ContractEditor = ({
     };
     fetchSections();
   }, []);
-
-  useEffect(() => {
-    if (editor && contract.content !== editor.getHTML()) {
-      editor.commands.setContent(contract.content, false);
-    }
-  }, [contract.content, editor]);
 
   const suggestedFields: Field[] = [
     {
@@ -197,7 +210,7 @@ const ContractEditor = ({
   };
 
   const extractFieldsFromContent = (content: string) => {
-    const placeholderRegex = /§\{([^}]+)\}/g;
+    const placeholderRegex = /<span data-placeholder="([^"]+)"/g;
     const fields: string[] = [];
     let match;
     while ((match = placeholderRegex.exec(content)) !== null) {
@@ -355,6 +368,10 @@ const ContractEditor = ({
     console.log("Saving contract:", contract);
   };
 
+  if (!isEditorReady) {
+    return <div>Loading editor...</div>; // Prevent rendering until editor is ready
+  }
+
   return (
     <div className="flex h-full relative flex-col sm:flex-row">
       <div
@@ -365,9 +382,6 @@ const ContractEditor = ({
         }`}
       >
         <div className="mb-6 flex flex-col space-y-4">
-          {/* <h1 className="text-2xl font-bold">
-            {mode === "contract" ? "Contract Editor" : "Template Editor"}
-          </h1> */}
           <div className="flex justify-between items-center">
             <Tabs
               value={activeTab}
@@ -389,9 +403,6 @@ const ContractEditor = ({
         <Tabs value={activeTab}>
           <TabsContent value="details">
             <Card>
-              {/* <CardHeader>
-                <CardTitle>Contract Details</CardTitle>
-              </CardHeader> */}
               <CardContent>
                 <div className="space-y-4 mt-3">
                   <div>
@@ -413,8 +424,11 @@ const ContractEditor = ({
                       className="border rounded-md p-2 prose max-w-none"
                     />
                     <p className="text-sm text-gray-500 mt-1">
-                      Use <code>§&#123;placeholder&#125;</code> for dynamic
-                      content that will be filled from field values.
+                      Use{" "}
+                      <code>
+                        <span>placeholder</span>
+                      </code>{" "}
+                      for dynamic content that will be filled from field values.
                     </p>
                   </div>
                 </div>
@@ -523,7 +537,7 @@ const ContractEditor = ({
       <Button
         onClick={saveContract}
         className={`sm:hidden fixed right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl bg-primary text-primary-foreground z-50 ${
-          activeTab === "details" ? "bottom-20" : "bottom-8"
+          activeTab === "details" ? "bottom-20" : "bottom-6"
         }`}
         title={`Save ${mode === "contract" ? "Contract" : "Template"}`}
       >

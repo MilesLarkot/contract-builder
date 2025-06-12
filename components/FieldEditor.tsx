@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -45,6 +45,16 @@ const FieldEditor = ({
   mode,
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
+  const [localName, setLocalName] = useState(field.name);
+
+  // Log content and field state for debugging
+  useEffect(() => {
+    console.log(`FieldEditor for ${field.name}:`, {
+      content,
+      isInContent: isFieldInContent,
+      hasValue: !!field.value,
+    });
+  }, [content, field.name, field.value]);
 
   const handleFieldChange = (
     key: keyof Field,
@@ -67,18 +77,38 @@ const FieldEditor = ({
   };
 
   const addFieldToContent = () => {
-    if (!field.name.trim()) return;
-    const placeholder = `§{${field.name}}`;
+    if (!localName.trim()) return;
 
     if (editor) {
-      editor.commands.insertContent(placeholder);
+      editor.commands.insertContent({
+        type: "placeholder",
+        attrs: { placeholder: localName },
+      });
+      editor.commands.insertContent(" ");
     } else {
+      const placeholder = `<span>${localName}</span>`;
       const newContent = content ? `${content} ${placeholder}` : placeholder;
       onContentChange(newContent);
     }
+    handleFieldChange("name", localName);
   };
 
-  const isFieldInContent = field.name && content?.includes(`§{${field.name}}`);
+  // Check for placeholder in editor's format
+  const isFieldInContent =
+    field.name && content?.includes(`data-placeholder="${field.name}"`);
+  const hasValue = !!field.value;
+
+  const getCircleStyles = () => {
+    if (isFieldInContent && hasValue) {
+      return "bg-cyan-500";
+    } else if (isFieldInContent && !hasValue) {
+      return "border-2 border-cyan-500";
+    } else if (!isFieldInContent && hasValue) {
+      return "bg-gray-300";
+    } else {
+      return "border-2 border-gray-300"; // Gray border when not in content and no value
+    }
+  };
 
   const getInputType = (fieldType: string) => {
     switch (fieldType) {
@@ -93,16 +123,21 @@ const FieldEditor = ({
     }
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalName(e.target.value);
+  };
+
+  const handleNameBlur = () => {
+    handleFieldChange("name", localName);
+  };
+
   return (
     <div className="flex items-center space-x-2 p-2 border rounded-md">
-      <div
-        className={`w-3 h-3 rounded-full mr-2 ${
-          isFieldInContent ? "bg-cyan-500" : "bg-gray-300"
-        }`}
-      />
+      <div className={`w-3 h-3 rounded-full mr-2 ${getCircleStyles()}`} />
       <Input
-        value={field.name}
-        onChange={(e) => handleFieldChange("name", e.target.value)}
+        value={localName}
+        onChange={handleNameChange}
+        onBlur={handleNameBlur}
         placeholder="Field name"
         className="flex-grow"
       />
@@ -110,7 +145,7 @@ const FieldEditor = ({
         variant="ghost"
         size="icon"
         onClick={addFieldToContent}
-        disabled={!field.name.trim()}
+        disabled={!localName.trim()}
         title="Add field to content"
       >
         <Plus className="h-4 w-4" />
@@ -235,4 +270,4 @@ const FieldEditor = ({
   );
 };
 
-export default FieldEditor;
+export default React.memo(FieldEditor);

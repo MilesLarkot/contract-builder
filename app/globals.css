@@ -180,6 +180,16 @@ body {
   }
 }
 
+[data-placeholder] {
+  display: inline-block;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 @layer base {
   * {
     @apply border-border;
