@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import FieldSchema from "./field";
+import { FieldSchema } from "./field";
 
 const SectionSchema = new mongoose.Schema({
   name: String,

@@ -14,17 +14,19 @@ import {
 import { MoreVertical, Trash2, X, Plus, Type } from "lucide-react";
 import { Editor } from "@tiptap/react";
 
+type Field = {
+  name: string;
+  type: string;
+  options: string[];
+  value: string;
+  mapping: string;
+  required: boolean;
+};
+
 type FieldEditorProps = {
-  field: {
-    name: string;
-    type: string;
-    options: string[];
-    value: string;
-    mapping: string;
-    required: boolean;
-  };
+  field: Field;
   index: number;
-  onChange: (field: any) => void;
+  onChange: (field: Field) => void;
   onRemove: () => void;
   content: string;
   onContentChange: (content: string) => void;
@@ -44,7 +46,10 @@ const FieldEditor = ({
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
 
-  const handleFieldChange = (key: string, value: any) => {
+  const handleFieldChange = (
+    key: keyof Field,
+    value: string | string[] | boolean
+  ) => {
     const updatedField = { ...field, [key]: value };
     onChange(updatedField);
   };

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const FieldSchema = new mongoose.Schema({
+export const FieldSchema = new mongoose.Schema({
   name: String,
   type: String,
   options: [String],

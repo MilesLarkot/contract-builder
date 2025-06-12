@@ -155,8 +155,8 @@ const ContractEditor = ({
     },
   ];
 
-  const handleContractChange = (field: string, value: string) => {
-    setContract((prev) => ({ ...prev, [field]: value }));
+  const handleContractChange = (field: string, value: unknown) => {
+    setContract((prev) => ({ ...prev, [field]: value as string }));
   };
 
   const handleFieldChange = (index: number, updatedField: Field) => {

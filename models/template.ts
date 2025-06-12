@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import PartySchema from "./party";
-import FieldSchema from "./field";
+import { PartySchema } from "./party";
+import { FieldSchema } from "./field";
 
 const TemplateSchema = new mongoose.Schema(
   {

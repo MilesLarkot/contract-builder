@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
-import FieldSchema from "./field";
+import { FieldSchema } from "./field";
 
-const PartySchema = new mongoose.Schema({
+export const PartySchema = new mongoose.Schema({
   role: String,
   fields: [FieldSchema],
 });
 
-export default mongoose.models.Field || mongoose.model("Party", PartySchema);
+export default mongoose.models.Party || mongoose.model("Party", PartySchema);
