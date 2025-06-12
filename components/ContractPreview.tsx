@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Contract } from "@/types";
 
 type ContractPreviewProps = {
@@ -13,7 +13,8 @@ const ContractPreview = ({ contract, mode }: ContractPreviewProps) => {
       return field && field.value ? field.value : fieldName;
     });
   };
-
+  // this is just to make the mode value used once in order to be able to deploy to Vercel :p
+  console.log(mode);
   return (
     <Card>
       {/* <CardHeader>

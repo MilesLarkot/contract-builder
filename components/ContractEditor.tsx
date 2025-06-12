@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Save } from "lucide-react";
@@ -49,7 +49,7 @@ const ContractEditor = ({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -155,7 +155,7 @@ const ContractEditor = ({
     },
   ];
 
-  const handleContractChange = (field: string, value: any) => {
+  const handleContractChange = (field: string, value: string) => {
     setContract((prev) => ({ ...prev, [field]: value }));
   };
 
