@@ -3,7 +3,7 @@ const dummyContractData = {
   description:
     "This agreement outlines the terms for consulting services provided by the Consultant to the Client.",
   content: `
-    <h1>Consulting Services Agreement</h1>
+    <h1 style="text-align: center">Consulting Services Agreement</h1>
     <p>This Consulting Services Agreement ("Agreement") is entered into as of §{effectiveDate} by and between §{party1}, a §{party1Type} ("Client"), and §{party2}, a §{party2Type} ("Consultant").</p>
 
     <h2>1. Scope of Services</h2>

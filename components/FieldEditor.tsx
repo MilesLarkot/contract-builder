@@ -75,7 +75,6 @@ const FieldEditor = ({
 
   const isFieldInContent = field.name && content?.includes(`§{${field.name}}`);
 
-  // Map field type to input type
   const getInputType = (fieldType: string) => {
     switch (fieldType) {
       case "date":
