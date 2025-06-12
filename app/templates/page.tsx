@@ -2,7 +2,7 @@
 import ContractEditor from "@/components/ContractEditor";
 
 function page() {
-  return <ContractEditor />;
+  return <ContractEditor mode="contract" />;
 }
 
 export default page;

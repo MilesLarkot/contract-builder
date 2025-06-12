@@ -29,6 +29,7 @@ type FieldEditorProps = {
   content: string;
   onContentChange: (content: string) => void;
   editor: Editor | null;
+  mode: "contract" | "template";
 };
 
 const FieldEditor = ({
@@ -39,6 +40,7 @@ const FieldEditor = ({
   content,
   onContentChange,
   editor,
+  mode,
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
 
@@ -126,6 +128,7 @@ const FieldEditor = ({
                   value={field.value}
                   onChange={(e) => handleFieldChange("value", e.target.value)}
                   placeholder="Field value"
+                  disabled={mode === "template"}
                   className="flex-grow"
                 />
                 <DropdownMenu>
