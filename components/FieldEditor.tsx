@@ -58,13 +58,16 @@ const FieldEditor = ({
   const [isEditing, setIsEditing] = useState(!field.name);
   const [isEditingValue, setIsEditingValue] = useState(false);
 
+  const isFieldInContent =
+    field.name && content?.includes(`data-placeholder="${field.name}"`);
+
   useEffect(() => {
     console.log(`FieldEditor for ${field.name}:`, {
       content,
       isInContent: isFieldInContent,
       hasValue: !!field.value,
     });
-  }, [content, field.name, field.value]);
+  }, [content, field.name, field.value, isFieldInContent]);
 
   const handleFieldChange = (
     key: keyof Field,
@@ -103,8 +106,6 @@ const FieldEditor = ({
     handleFieldChange("name", localName);
   };
 
-  const isFieldInContent =
-    field.name && content?.includes(`data-placeholder="${field.name}"`);
   const hasValue = !!field.value;
 
   const getCircleStyles = () => {

@@ -387,10 +387,12 @@ const ContractEditor = ({
     }));
   };
 
-  // Debounce utility
-  const debounce = (func: (...args: any[]) => void, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any[]) => {
+  const debounce = <T extends (...args: unknown[]) => void>(
+    func: T,
+    delay: number
+  ) => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    return (...args: Parameters<T>) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func(...args), delay);
     };
@@ -415,8 +417,15 @@ const ContractEditor = ({
   useEffect(() => {
     const debouncedSave = debounce(saveContract, 2000);
     debouncedSave();
-    return () => clearTimeout(debouncedSave as any);
-  }, [contract]);
+    return () =>
+      clearTimeout(
+        (
+          debouncedSave as unknown as {
+            timeoutId?: ReturnType<typeof setTimeout>;
+          }
+        ).timeoutId
+      );
+  }, [contract, saveContract]);
 
   if (!isEditorReady) {
     return <div>Loading editor...</div>;

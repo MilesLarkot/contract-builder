@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import FieldEditor from "@/components/FieldEditor";
 import { Editor } from "@tiptap/react";
 import type { Contract, Section, Field, Party, PartyField } from "@/types";
@@ -15,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useState } from "react";
 
 type ContractSidebarProps = {
   contract: Contract;
@@ -65,15 +71,17 @@ const ContractSidebar = ({
   onRemovePartyField,
   onPartyTypeChange,
 }: ContractSidebarProps) => {
+  const [isSuggestedFieldsOpen, setIsSuggestedFieldsOpen] = useState(false);
+
   return (
-    <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] overflow-y-auto">
-      <Tabs defaultValue="fields" className="w-full">
+    <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] flex flex-col">
+      <Tabs defaultValue="fields" className="w-full flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 gap-2">
           <TabsTrigger value="fields">Fields</TabsTrigger>
           <TabsTrigger value="sections">Sections</TabsTrigger>
           <TabsTrigger value="parties">Parties</TabsTrigger>
         </TabsList>
-        <TabsContent value="sections">
+        <TabsContent value="sections" className="flex-grow">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Available Sections</h2>
             <Button onClick={onCreateSection} size="sm" variant="outline">
@@ -121,56 +129,81 @@ const ContractSidebar = ({
             </div>
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="fields">
+        <TabsContent value="fields" className="flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Contract Fields</h2>
             <Button onClick={onAddField} size="sm" variant="outline">
               <Plus className="h-4 w-4" /> Add Field
             </Button>
           </div>
-          <ScrollArea className="h-[calc(100vh-160px)]">
-            <div className="space-y-3">
-              {contract.fields.map((field, index) => (
-                <FieldEditor
-                  key={field.name || `field-${index}`}
-                  field={field}
-                  index={index}
-                  onChange={(updatedField) =>
-                    onFieldChange(index, updatedField)
-                  }
-                  onRemove={() => onRemoveField(index)}
-                  content={contract.content}
-                  onContentChange={onContractChange.bind(null, "content")}
-                  editor={editor}
-                  mode={mode}
-                />
-              ))}
-              <div className="mt-6">
-                <h3 className="font-semibold mb-2">Suggested Fields</h3>
-                <div className="space-y-2">
-                  {suggestedFields.map((field, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                    >
-                      <span>
-                        {field.name} ({field.type})
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onAddSuggestedField(field)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
+          <div className="flex-1 flex flex-col min-h-0 space-y-3">
+            {/* Contract Fields Section with constrained height */}
+            <div className="flex-1 min-h-0 max-h-[60vh]">
+              <ScrollArea className="h-full">
+                <div className="space-y-3 pr-4">
+                  {contract.fields.map((field, index) => (
+                    <FieldEditor
+                      key={field.name || `field-${index}`}
+                      field={field}
+                      index={index}
+                      onChange={(updatedField) =>
+                        onFieldChange(index, updatedField)
+                      }
+                      onRemove={() => onRemoveField(index)}
+                      content={contract.content}
+                      onContentChange={onContractChange.bind(null, "content")}
+                      editor={editor}
+                      mode={mode}
+                    />
                   ))}
                 </div>
-              </div>
+              </ScrollArea>
             </div>
-          </ScrollArea>
+
+            {/* Suggested Fields Section with constrained height */}
+            <div className="border-t pt-3 bg-gray-50 max-h-[30vh] flex flex-col">
+              <Collapsible
+                open={isSuggestedFieldsOpen}
+                onOpenChange={setIsSuggestedFieldsOpen}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between">
+                    <span className="font-semibold">Suggested Fields</span>
+                    {isSuggestedFieldsOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="flex-1 min-h-0">
+                  <ScrollArea className="h-48 pt-2">
+                    <div className="space-y-2 pr-4">
+                      {suggestedFields.map((field, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-white rounded-md border"
+                        >
+                          <span className="text-sm">
+                            {field.name} ({field.type})
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onAddSuggestedField(field)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </div>
         </TabsContent>
-        <TabsContent value="parties">
+        <TabsContent value="parties" className="flex-grow">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Parties</h2>
             <Button onClick={onAddParty} size="sm" variant="outline">
