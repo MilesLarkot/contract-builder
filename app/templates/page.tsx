@@ -330,18 +330,22 @@ const TemplatesPage = () => {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 hidden">
                     {getTypeIcon(template.type)}
                     <Badge className={getTypeColor(template.type)}>
                       {template.type.charAt(0).toUpperCase() +
                         template.type.slice(1)}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center w-full">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={template.isFavorite ? "text-yellow-500" : ""}
+                      className={
+                        template.isFavorite
+                          ? "ml-auto text-yellow-500"
+                          : "ml-auto "
+                      }
                     >
                       <Star
                         className={`h-4 w-4 ${
@@ -408,8 +412,8 @@ const TemplatesPage = () => {
                       <p className="font-medium">{template.usageCount}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Rating</p>
-                      <div className="flex items-center gap-1">
+                      <p className="text-gray-600 hidden">Rating</p>
+                      <div className="flex items-center gap-1 hidden">
                         <Star className="h-3 w-3 fill-current text-yellow-400" />
                         <span className="font-medium">{template.rating}</span>
                       </div>
