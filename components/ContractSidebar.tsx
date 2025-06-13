@@ -74,7 +74,7 @@ const ContractSidebar = ({
   const [isSuggestedFieldsOpen, setIsSuggestedFieldsOpen] = useState(false);
 
   return (
-    <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] flex flex-col">
+    <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] flex flex-col overflow-y-hidden">
       <Tabs defaultValue="fields" className="w-full flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 gap-2">
           <TabsTrigger value="fields">Fields</TabsTrigger>
@@ -168,7 +168,7 @@ const ContractSidebar = ({
               >
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" className="w-full justify-between">
-                    <span className="font-semibold">Suggested Fields</span>
+                    <small>Suggested Fields</small>
                     {isSuggestedFieldsOpen ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (

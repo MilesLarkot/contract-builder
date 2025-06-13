@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react"; // Added useCallback
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -387,20 +387,24 @@ const ContractEditor = ({
     }));
   };
 
+  // Modified debounce function to include cancel method
   const debounce = <T extends (...args: unknown[]) => void>(
     func: T,
     delay: number
   ) => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    return (...args: Parameters<T>) => {
+    const debounced = (...args: Parameters<T>) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func(...args), delay);
     };
+    debounced.cancel = () => clearTimeout(timeoutId); // Added cancel method
+    return debounced;
   };
 
   const saveContract = async () => {
     if (contract.title.trim() === "") {
       console.log("Cannot save: Title is empty");
+      setShowTitleError(true); // Added to show error if title is empty
       return;
     }
     setIsSaving(true);
@@ -414,25 +418,25 @@ const ContractEditor = ({
     }
   };
 
+  // Moved debouncedSave outside useEffect and used useCallback
+  const debouncedSave = useCallback(debounce(saveContract, 5000), [
+    saveContract,
+  ]);
+
+  // Updated useEffect to use stable debouncedSave
   useEffect(() => {
-    const debouncedSave = debounce(saveContract, 2000);
     debouncedSave();
-    return () =>
-      clearTimeout(
-        (
-          debouncedSave as unknown as {
-            timeoutId?: ReturnType<typeof setTimeout>;
-          }
-        ).timeoutId
-      );
-  }, [contract, saveContract]);
+    return () => {
+      debouncedSave.cancel(); // Cancel pending debounce on cleanup
+    };
+  }, [contract, debouncedSave]);
 
   if (!isEditorReady) {
     return <div>Loading editor...</div>;
   }
 
   return (
-    <div className="flex h-full relative flex-col sm:flex-row">
+    <div className="flex h-full flex-col sm:flex-row">
       <div
         className={`flex-grow p-6 ${
           activeTab === "details"
@@ -533,7 +537,7 @@ const ContractEditor = ({
       )}
 
       {activeTab === "details" && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t p-2 grid grid-cols-3 gap-2 sm:hidden z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t p-2 grid grid-cols-3 gap-2 sm:hidden z-40">
           <Button
             variant="outline"
             onClick={() => {
