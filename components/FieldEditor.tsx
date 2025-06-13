@@ -11,7 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Trash2, X, Plus, Type } from "lucide-react";
+import {
+  MoreVertical,
+  Trash2,
+  X,
+  Plus,
+  Type,
+  Hash,
+  Calendar,
+  Mail,
+} from "lucide-react";
 import { Editor } from "@tiptap/react";
 
 type Field = {
@@ -46,8 +55,9 @@ const FieldEditor = ({
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
   const [localName, setLocalName] = useState(field.name);
+  const [isEditing, setIsEditing] = useState(!field.name);
+  const [isEditingValue, setIsEditingValue] = useState(false);
 
-  // Log content and field state for debugging
   useEffect(() => {
     console.log(`FieldEditor for ${field.name}:`, {
       content,
@@ -86,14 +96,13 @@ const FieldEditor = ({
       });
       editor.commands.insertContent(" ");
     } else {
-      const placeholder = `<span>${localName}</span>`;
+      const placeholder = `<span data-placeholder="${localName}">${localName}</span>`;
       const newContent = content ? `${content} ${placeholder}` : placeholder;
       onContentChange(newContent);
     }
     handleFieldChange("name", localName);
   };
 
-  // Check for placeholder in editor's format
   const isFieldInContent =
     field.name && content?.includes(`data-placeholder="${field.name}"`);
   const hasValue = !!field.value;
@@ -106,7 +115,7 @@ const FieldEditor = ({
     } else if (!isFieldInContent && hasValue) {
       return "bg-gray-300";
     } else {
-      return "border-2 border-gray-300"; // Gray border when not in content and no value
+      return "border-2 border-gray-300";
     }
   };
 
@@ -123,24 +132,91 @@ const FieldEditor = ({
     }
   };
 
+  const getTypeIcon = () => {
+    switch (field.type) {
+      case "number":
+        return <Hash className="h-4 w-4" />;
+      case "date":
+        return <Calendar className="h-4 w-4" />;
+      case "email":
+        return <Mail className="h-4 w-4" />;
+      default:
+        return <Type className="h-4 w-4" />;
+    }
+  };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalName(e.target.value);
   };
 
   const handleNameBlur = () => {
-    handleFieldChange("name", localName);
+    if (localName.trim()) {
+      handleFieldChange("name", localName);
+      setIsEditing(false);
+    }
+  };
+
+  const handleChipClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleValueClick = () => {
+    if (mode !== "template") {
+      setIsEditingValue(true);
+    }
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFieldChange("value", e.target.value);
+  };
+
+  const handleValueBlur = () => {
+    setIsEditingValue(false);
   };
 
   return (
-    <div className="flex items-center space-x-2 p-2 border rounded-md">
+    <div className="flex items-center space-x-2 p-2 border-b rounded-md">
       <div className={`w-3 h-3 rounded-full mr-2 ${getCircleStyles()}`} />
-      <Input
-        value={localName}
-        onChange={handleNameChange}
-        onBlur={handleNameBlur}
-        placeholder="Field name"
-        className="flex-grow"
-      />
+      <div className="flex flex-col flex-grow">
+        {isEditing ? (
+          <Input
+            value={localName}
+            onChange={handleNameChange}
+            onBlur={handleNameBlur}
+            placeholder="Field name"
+            className="mb-1"
+            autoFocus
+          />
+        ) : (
+          <span
+            className="inline-block bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 text-sm font-medium cursor-pointer mb-1"
+            onClick={handleChipClick}
+          >
+            {localName || "Unnamed Field"}
+          </span>
+        )}
+        {isEditingValue ? (
+          <Input
+            type={getInputType(field.type)}
+            value={field.value}
+            onChange={handleValueChange}
+            onBlur={handleValueBlur}
+            placeholder="Field value"
+            disabled={mode === "template"}
+            className="text-sm"
+            autoFocus
+          />
+        ) : (
+          <small
+            className={`cursor-pointer ${
+              mode === "template" ? "cursor-default" : ""
+            }`}
+            onClick={handleValueClick}
+          >
+            {field.value || "No value"}
+          </small>
+        )}
+      </div>
       <Button
         variant="ghost"
         size="icon"
@@ -177,7 +253,7 @@ const FieldEditor = ({
                       size="icon"
                       title="Change field type"
                     >
-                      <Type className="h-4 w-4" />
+                      {getTypeIcon()}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>

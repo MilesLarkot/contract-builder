@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
+  Undo,
+  Redo,
   Bold,
   Italic,
   List,
@@ -56,6 +58,26 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
 
   return (
     <div className="mb-2 flex gap-1 flex-wrap">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        aria-label="Undo"
+        title="Undo"
+      >
+        <Undo className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        aria-label="Redo"
+        title="Redo"
+      >
+        <Redo className="h-4 w-4" />
+      </Button>
       <Button
         variant={editor.isActive("bold") ? "default" : "outline"}
         size="sm"
