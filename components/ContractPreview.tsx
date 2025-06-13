@@ -23,10 +23,9 @@ const ExportToPDF = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleExportToPDF = async () => {
-    setError(null); // Reset error state
+    setError(null);
     if (!contentRef.current) return;
 
-    // Check for <span> elements with classes inline-block, bg-blue-100, and text-blue-800
     const hasInvalidSpans =
       /<span[^>]*class="[^"]*inline-block[^"]*bg-blue-100[^"]*text-blue-800[^"]*"[^>]*>/i.test(
         content

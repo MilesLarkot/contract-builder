@@ -62,7 +62,9 @@ const ContractEditor = ({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isEditorReady, setIsEditorReady] = useState(false); // Track editor initialization
+  const [isEditorReady, setIsEditorReady] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showTitleError, setShowTitleError] = useState(false);
   const isUpdatingFromEditor = useRef(false);
 
   const editor = useEditor({
@@ -182,6 +184,9 @@ const ContractEditor = ({
 
   const handleContractChange = (field: string, value: unknown) => {
     setContract((prev) => ({ ...prev, [field]: value as string }));
+    if (field === "title") {
+      setShowTitleError((value as string).trim() === "");
+    }
   };
 
   const handleFieldChange = (index: number, updatedField: Field) => {
@@ -215,19 +220,19 @@ const ContractEditor = ({
         },
       ],
     }));
-    setIsModalOpen(false); // Close modal after adding field
+    setIsModalOpen(false);
   };
 
   const addSuggestedField = (field: Field) => {
     setContract((prev) => ({ ...prev, fields: [...prev.fields, field] }));
-    setIsModalOpen(false); // Close modal after adding suggested field
+    setIsModalOpen(false);
   };
 
   const extractFieldsFromContent = (content: string) => {
     const placeholderRegex = /<span data-placeholder="([^"]+)"/g;
     const fields: string[] = [];
     let match;
-    while ((match = placeholderRegex.exec(content)) !== null) {
+    while ((match = placeholderRegex.exec(content))) {
       fields.push(match[1]);
     }
     return fields;
@@ -258,7 +263,7 @@ const ContractEditor = ({
     if (editor) {
       editor.commands.insertContent(`<p>${section.content}</p>`);
     }
-    setIsModalOpen(false); // Close modal after adding section
+    setIsModalOpen(false);
   };
 
   const updateAvailableSection = (
@@ -283,7 +288,7 @@ const ContractEditor = ({
         fields: [],
       },
     ]);
-    setIsModalOpen(false); // Close modal after creating new section
+    setIsModalOpen(false);
   };
 
   const addParty = () => {
@@ -299,7 +304,7 @@ const ContractEditor = ({
         },
       ],
     }));
-    setIsModalOpen(false); // Close modal after adding party
+    setIsModalOpen(false);
   };
 
   const updateParty = (partyId: string, updatedParty: Partial<Party>) => {
@@ -333,7 +338,7 @@ const ContractEditor = ({
           : party
       ),
     }));
-    setIsModalOpen(false); // Close modal after adding party field
+    setIsModalOpen(false);
   };
 
   const updatePartyField = (
@@ -382,9 +387,36 @@ const ContractEditor = ({
     }));
   };
 
-  const saveContract = () => {
-    console.log("Saving contract:", contract);
+  // Debounce utility
+  const debounce = (func: (...args: any[]) => void, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
+    };
   };
+
+  const saveContract = async () => {
+    if (contract.title.trim() === "") {
+      console.log("Cannot save: Title is empty");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      console.log("Saving contract:", contract);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Save error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    const debouncedSave = debounce(saveContract, 2000);
+    debouncedSave();
+    return () => clearTimeout(debouncedSave as any);
+  }, [contract]);
 
   if (!isEditorReady) {
     return <div>Loading editor...</div>;
@@ -412,8 +444,15 @@ const ContractEditor = ({
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button onClick={saveContract} className="hidden sm:block">
-              Save {mode === "contract" ? "Contract" : "Template"}
+            <Button
+              onClick={saveContract}
+              disabled={isSaving}
+              variant={isSaving ? "outline" : "default"}
+              className="hidden sm:block"
+            >
+              {isSaving
+                ? "Saving..."
+                : `Save ${mode === "contract" ? "Contract" : "Template"}`}
             </Button>
           </div>
         </div>
@@ -433,6 +472,11 @@ const ContractEditor = ({
                       }
                       placeholder="Contract title"
                     />
+                    {showTitleError && (
+                      <p className="text-red-500 text-sm mt-1">
+                        Title is required for saving
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="content">Content</Label>
@@ -547,12 +591,18 @@ const ContractEditor = ({
 
       <Button
         onClick={saveContract}
+        disabled={isSaving}
+        variant={isSaving ? "outline" : "default"}
         className={`sm:hidden fixed right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl bg-primary text-primary-foreground z-50 ${
           activeTab === "details" ? "bottom-20" : "bottom-6"
         }`}
         title={`Save ${mode === "contract" ? "Contract" : "Template"}`}
       >
-        <Save className="h-6 w-6" />
+        {isSaving ? (
+          <span className="animate-spin">↻</span>
+        ) : (
+          <Save className="h-6 w-6" />
+        )}
       </Button>
     </div>
   );
