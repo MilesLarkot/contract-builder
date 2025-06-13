@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { X } from "lucide-react";
+// import { X } from "lucide-react";
 import ContractSidebar from "@/components/ContractSidebar";
 import { Contract, Section, Field, Party, PartyField } from "@/types";
 import { Editor } from "@tiptap/react";
@@ -84,21 +84,21 @@ const ContractEditorModal = ({
       <Dialog open={isModalOpen} onOpenChange={onModalOpenChange}>
         <DialogContent className="w-fit max-w-[90vw] max-h-[80vh] p-0">
           <DialogHeader className="p-4 pb-0">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center">
               <DialogTitle>
                 {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </DialogTitle>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onModalOpenChange(false)}
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </DialogHeader>
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)] w-fit">
             <Tabs value={activeTab} className="w-full">
               <TabsContent value={activeTab}>
                 <ContractSidebar
@@ -122,6 +122,7 @@ const ContractEditorModal = ({
                   onUpdatePartyField={onUpdatePartyField}
                   onRemovePartyField={onRemovePartyField}
                   onPartyTypeChange={onPartyTypeChange}
+                  showTabs={false}
                 />
               </TabsContent>
             </Tabs>

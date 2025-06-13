@@ -47,6 +47,7 @@ type ContractSidebarProps = {
   ) => void;
   onRemovePartyField: (partyId: string, fieldIndex: number) => void;
   onPartyTypeChange: (partyId: string, type: "company" | "individual") => void;
+  showTabs?: boolean;
 };
 
 const ContractSidebar = ({
@@ -70,17 +71,20 @@ const ContractSidebar = ({
   onUpdatePartyField,
   onRemovePartyField,
   onPartyTypeChange,
+  showTabs = true,
 }: ContractSidebarProps) => {
   const [isSuggestedFieldsOpen, setIsSuggestedFieldsOpen] = useState(false);
 
   return (
     <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] flex flex-col overflow-y-hidden">
       <Tabs defaultValue="fields" className="w-full flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 gap-2">
-          <TabsTrigger value="fields">Fields</TabsTrigger>
-          <TabsTrigger value="sections">Sections</TabsTrigger>
-          <TabsTrigger value="parties">Parties</TabsTrigger>
-        </TabsList>
+        {showTabs && (
+          <TabsList className="grid w-full grid-cols-3 gap-2">
+            <TabsTrigger value="fields">Fields</TabsTrigger>
+            <TabsTrigger value="sections">Sections</TabsTrigger>
+            <TabsTrigger value="parties">Parties</TabsTrigger>
+          </TabsList>
+        )}
         <TabsContent value="sections" className="flex-grow">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Available Sections</h2>
