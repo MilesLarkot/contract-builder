@@ -441,13 +441,6 @@ const ContractEditor = ({
                       editor={editor}
                       className="border rounded-md p-6 prose max-w-none"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Use{" "}
-                      <code>
-                        <span>placeholder</span>
-                      </code>{" "}
-                      for dynamic content that will be filled from field values.
-                    </p>
                   </div>
                 </div>
               </CardContent>
