@@ -103,7 +103,6 @@ const ExportToPDF = ({
 
       document.body.removeChild(tempDiv);
     } catch (error) {
-      console.error("Error generating PDF:", error);
       setError("An error occurred while generating the PDF.");
     }
   };
@@ -136,10 +135,7 @@ export default function ContractPreview({
       /<span\s*(?:data-placeholder="([^"]+)")?\s*(?:class="[^"]*")?>[^<]*<\/span>/g,
       (match, fieldName) => {
         const field = contract.fields.find((f) => f.name === fieldName);
-        console.log(
-          `Processing placeholder: ${fieldName}, Found field:`,
-          field
-        );
+
         if (field && field.value) {
           return field.value;
         }
@@ -151,8 +147,6 @@ export default function ContractPreview({
   const processedContent = contract.content
     ? replacePlaceholders(contract.content)
     : "";
-
-  console.log(mode);
 
   return (
     <Card>

@@ -97,7 +97,6 @@ const ContractEditor = ({
     onUpdate: ({ editor }) => {
       isUpdatingFromEditor.current = true;
       const html = editor.getHTML();
-      console.log("Editor updated HTML:", html);
       setContract((prev) => ({ ...prev, content: html }));
     },
     immediatelyRender: false,
@@ -105,7 +104,6 @@ const ContractEditor = ({
 
   useEffect(() => {
     if (editor && contract.content && !isUpdatingFromEditor.current) {
-      console.log("Setting editor content:", contract.content);
       editor.commands.setContent(normalizeContent(contract.content), false, {
         preserveWhitespace: true,
       });
@@ -116,10 +114,6 @@ const ContractEditor = ({
 
   useEffect(() => {
     if (editor && isEditorReady) {
-      console.log(
-        "Updating PlaceholderExtension with new fields:",
-        contract.fields
-      );
       editor.extensionManager.extensions.forEach((extension) => {
         if (extension.name === "placeholder") {
           extension.options.fields = contract.fields;
@@ -177,9 +171,7 @@ const ContractEditor = ({
           },
         ];
         setAvailableSections(mockSections);
-      } catch (error) {
-        console.error("Error fetching sections:", error);
-      }
+      } catch (error) {}
     };
     fetchSections();
   }, []);
@@ -422,14 +414,11 @@ const ContractEditor = ({
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    console.log("Drag over editor");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    console.log("Drop event triggered");
     if (!editor) {
-      console.log("Editor not available");
       return;
     }
 
@@ -438,22 +427,13 @@ const ContractEditor = ({
     if (rect) {
       const offsetX = e.clientX - rect.left;
       const offsetY = e.clientY - rect.top;
-      console.log("Drop coordinates:", {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        offsetX,
-        offsetY,
-      });
       position = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
-      console.log("Position from posAtCoords:", position);
     }
 
     const sectionId = e.dataTransfer.getData("sectionId");
     if (sectionId) {
-      console.log("Section dropped:", sectionId);
       const section = availableSections.find((s) => s.id === sectionId);
       if (!section) {
-        console.log("Section not found");
         return;
       }
 
@@ -465,16 +445,13 @@ const ContractEditor = ({
         .insertContent(`<p>${normalizedSectionContent}</p>`)
         .setTextSelection(insertPos + normalizedSectionContent.length + 7)
         .run();
-      console.log("Section content inserted at position:", insertPos);
 
       addSectionToContent(section);
       return;
     }
 
     const fieldName = e.dataTransfer.getData("fieldName");
-    console.log("Field name from dataTransfer:", fieldName);
     if (!fieldName) {
-      console.log("No field name or section id provided");
       return;
     }
 
@@ -489,7 +466,6 @@ const ContractEditor = ({
       .insertContent(" ")
       .setTextSelection(insertPos + fieldName.length + 1)
       .run();
-    console.log("Placeholder inserted at position:", insertPos);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -513,16 +489,13 @@ const ContractEditor = ({
 
   const saveContract = async () => {
     if (contract.title.trim() === "") {
-      console.log("Cannot save: Title is empty");
       setShowTitleError(true);
       return;
     }
     setIsSaving(true);
     try {
-      console.log("Saving contract:", contract);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error("Save error:", error);
     } finally {
       setIsSaving(false);
     }

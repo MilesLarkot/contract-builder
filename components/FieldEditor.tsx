@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   MoreVertical,
   Trash2,
   X,
@@ -21,14 +28,7 @@ import {
   Mail,
 } from "lucide-react";
 import { Editor } from "@tiptap/react";
-
-type Field = {
-  name: string;
-  type: string;
-  options: string[];
-  value: string;
-  mapping: string;
-};
+import { Contract, Field, Party } from "@/types";
 
 type FieldEditorProps = {
   field: Field;
@@ -39,6 +39,7 @@ type FieldEditorProps = {
   onContentChange: (content: string) => void;
   editor: Editor | null;
   mode: "contract" | "template";
+  parties: Party[];
 };
 
 const FieldEditor = ({
@@ -50,33 +51,56 @@ const FieldEditor = ({
   onContentChange,
   editor,
   mode,
+  parties,
 }: FieldEditorProps) => {
   const [optionInput, setOptionInput] = useState("");
   const [localName, setLocalName] = useState(field.name);
   const [isEditing, setIsEditing] = useState(!field.name);
   const valueInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize dropdown states
+  const initialMapping = useMemo(() => {
+    if (field.mapping) {
+      const [partyId, fieldName] = field.mapping.split(".");
+      if (partyId && parties.some((party) => party.id === partyId)) {
+        return {
+          partyId,
+          fieldName:
+            fieldName &&
+            parties
+              .find((party) => party.id === partyId)
+              ?.fields.some((f) => f.name === fieldName)
+              ? fieldName
+              : "",
+        };
+      }
+    }
+    return { partyId: "", fieldName: "" };
+  }, [field.mapping, parties]);
+
+  const [selectedPartyId, setSelectedPartyId] = useState(
+    initialMapping.partyId
+  );
+  const [selectedFieldName, setSelectedFieldName] = useState(
+    initialMapping.fieldName
+  );
+
   const isFieldInContent =
     field.name && content?.includes(`data-placeholder="${field.name}"`);
 
   const showOptions = field.type === "text";
 
-  useEffect(() => {
-    console.log(`FieldEditor for ${field.name}:`, {
-      content,
-      isInContent: isFieldInContent,
-      hasValue: !!field.value,
-    });
-  }, [content, field.name, field.value, isFieldInContent]);
-
-  const handleFieldChange = (key: keyof Field, value: string | string[]) => {
-    const updatedField = { ...field, [key]: value };
-    if (key === "type" && value !== "text") {
-      updatedField.options = [];
-      setOptionInput("");
-    }
-    onChange(updatedField);
-  };
+  const handleFieldChange = useCallback(
+    (key: keyof Field, value: string | string[]) => {
+      const updatedField = { ...field, [key]: value };
+      if (key === "type" && value !== "text") {
+        updatedField.options = [];
+        setOptionInput("");
+      }
+      onChange(updatedField);
+    },
+    [field, onChange]
+  );
 
   const addOption = () => {
     if (optionInput.trim() === "" || !showOptions) return;
@@ -169,17 +193,55 @@ const FieldEditor = ({
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!localName.trim()) return;
+    if (!localName.trim()) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("fieldName", localName);
     e.dataTransfer.effectAllowed = "move";
     handleFieldChange("name", localName);
   };
 
+  const handlePartyChange = useCallback(
+    (partyId: string) => {
+      console.log("Selected party:", partyId, {
+        previousPartyId: selectedPartyId,
+      });
+      setSelectedPartyId(partyId);
+      setSelectedFieldName("");
+      const newMapping = partyId ? partyId : "";
+      console.log("Setting mapping (party change):", newMapping);
+      handleFieldChange("mapping", newMapping);
+    },
+    [handleFieldChange, selectedPartyId]
+  );
+
+  const handleFieldNameChange = useCallback(
+    (fieldName: string) => {
+      console.log("Selected field:", fieldName, {
+        currentPartyId: selectedPartyId,
+      });
+      setSelectedFieldName(fieldName);
+      const newMapping =
+        selectedPartyId && fieldName
+          ? `${selectedPartyId}.${fieldName}`
+          : selectedPartyId || "";
+      console.log("Setting mapping (field change):", newMapping);
+      handleFieldChange("mapping", newMapping);
+    },
+    [handleFieldChange, selectedPartyId]
+  );
+
+  const selectedPartyFields = useMemo(() => {
+    return parties.find((party) => party.id === selectedPartyId)?.fields || [];
+  }, [parties, selectedPartyId]);
+
   return (
     <div
-      className="flex items-center space-x-2 p-2 border-b rounded-md cursor-move"
+      className="flex items-center space-x-2 p-2 border-b rounded-md"
       draggable={!!localName.trim()}
       onDragStart={handleDragStart}
+      onDragOver={(e) => e.preventDefault()}
     >
       <div className={`w-3 h-3 rounded-full mr-2 ${getCircleStyles()}`} />
 
@@ -244,7 +306,7 @@ const FieldEditor = ({
       </div>
       <div className="flex flex-col space-y-1">
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5 text-gray-500" />
             </Button>
@@ -289,12 +351,57 @@ const FieldEditor = ({
               )}
               <div>
                 <Label htmlFor={`field-mapping-${index}`}>Mapping</Label>
-                <Input
-                  id={`field-mapping-${index}`}
-                  value={field.mapping}
-                  onChange={(e) => handleFieldChange("mapping", e.target.value)}
-                  placeholder="e.g. collaborator.name"
-                />
+                <div className="flex items-center space-x-2">
+                  <Select
+                    value={selectedPartyId}
+                    onValueChange={handlePartyChange}
+                    key={`party-select-${index}`}
+                  >
+                    <SelectTrigger id={`party-select-${index}`}>
+                      <SelectValue placeholder="Select party" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parties.length === 0 ? (
+                        <SelectItem value="no-parties" disabled>
+                          No parties available
+                        </SelectItem>
+                      ) : (
+                        parties.map((party) => (
+                          <SelectItem key={party.id} value={party.id}>
+                            {party.name || `Party ${party.id}`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <span>.</span>
+                  <Select
+                    value={selectedFieldName}
+                    onValueChange={handleFieldNameChange}
+                    disabled={!selectedPartyId}
+                    key={`field-select-${index}`}
+                  >
+                    <SelectTrigger id={`field-select-${index}`}>
+                      <SelectValue placeholder="Select field" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedPartyFields.length === 0 ? (
+                        <SelectItem value="no-fields" disabled>
+                          No fields available
+                        </SelectItem>
+                      ) : (
+                        selectedPartyFields.map((partyField, idx) => (
+                          <SelectItem
+                            key={`${partyField.name || "field"}-${idx}`}
+                            value={partyField.name}
+                          >
+                            {partyField.name || `Field ${idx + 1}`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <DropdownMenuItem
                 onClick={onRemove}
@@ -310,7 +417,7 @@ const FieldEditor = ({
           variant="ghost"
           size="icon"
           onClick={addFieldToContent}
-          disabled={!localName.trim()}
+          disabled={!localName}
           title="Add field to content"
         >
           <Plus className="h-4 w-4" />

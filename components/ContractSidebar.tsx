@@ -77,7 +77,6 @@ const ContractSidebar = ({
   ) => {
     e.dataTransfer.setData("sectionId", sectionId);
     e.dataTransfer.effectAllowed = "move";
-    console.log("Dragging section:", sectionId);
   };
 
   return (
@@ -117,6 +116,7 @@ const ContractSidebar = ({
                   }
                   editor={editor}
                   mode={mode}
+                  parties={contract.parties}
                 />
               ))}
             </div>

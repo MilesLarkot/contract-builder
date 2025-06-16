@@ -324,7 +324,6 @@ const useContractEditor = ({
 
   const saveContract = async () => {
     try {
-      console.log("Saving contract:", contract);
       alert("Contract saved successfully!");
     } catch (error) {
       console.error("Error saving contract:", error);
