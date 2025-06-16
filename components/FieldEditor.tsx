@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,7 +28,6 @@ type Field = {
   options: string[];
   value: string;
   mapping: string;
-  required: boolean;
 };
 
 type FieldEditorProps = {
@@ -56,10 +54,12 @@ const FieldEditor = ({
   const [optionInput, setOptionInput] = useState("");
   const [localName, setLocalName] = useState(field.name);
   const [isEditing, setIsEditing] = useState(!field.name);
-  const [isEditingValue, setIsEditingValue] = useState(false);
+  const valueInputRef = useRef<HTMLInputElement>(null);
 
   const isFieldInContent =
     field.name && content?.includes(`data-placeholder="${field.name}"`);
+
+  const showOptions = field.type === "text";
 
   useEffect(() => {
     console.log(`FieldEditor for ${field.name}:`, {
@@ -69,16 +69,17 @@ const FieldEditor = ({
     });
   }, [content, field.name, field.value, isFieldInContent]);
 
-  const handleFieldChange = (
-    key: keyof Field,
-    value: string | string[] | boolean
-  ) => {
+  const handleFieldChange = (key: keyof Field, value: string | string[]) => {
     const updatedField = { ...field, [key]: value };
+    if (key === "type" && value !== "text") {
+      updatedField.options = [];
+      setOptionInput("");
+    }
     onChange(updatedField);
   };
 
   const addOption = () => {
-    if (optionInput.trim() === "") return;
+    if (optionInput.trim() === "" || !showOptions) return;
     const updatedOptions = [...field.options, optionInput.trim()];
     handleFieldChange("options", updatedOptions);
     setOptionInput("");
@@ -157,26 +158,29 @@ const FieldEditor = ({
     }
   };
 
-  const handleChipClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleValueClick = () => {
-    if (mode !== "template") {
-      setIsEditingValue(true);
-    }
-  };
-
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFieldChange("value", e.target.value);
+    let value = e.target.value;
+    if (field.type === "number" && value !== "") {
+      if (!/^-?\d*\.?\d*$/.test(value)) {
+        return;
+      }
+    }
+    handleFieldChange("value", value);
   };
 
-  const handleValueBlur = () => {
-    setIsEditingValue(false);
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!localName.trim()) return;
+    e.dataTransfer.setData("fieldName", localName);
+    e.dataTransfer.effectAllowed = "move";
+    handleFieldChange("name", localName);
   };
 
   return (
-    <div className="flex items-center space-x-2 p-2 border-b rounded-md">
+    <div
+      className="flex items-center space-x-2 p-2 border-b rounded-md cursor-move"
+      draggable={!!localName.trim()}
+      onDragStart={handleDragStart}
+    >
       <div className={`w-3 h-3 rounded-full mr-2 ${getCircleStyles()}`} />
       <div className="flex flex-col flex-grow">
         {isEditing ? (
@@ -191,158 +195,126 @@ const FieldEditor = ({
         ) : (
           <span
             className="inline-block bg-blue-100 text-blue-800 rounded px-1.5 py-0.5 text-sm font-medium cursor-pointer mb-1"
-            onClick={handleChipClick}
+            onClick={() => setIsEditing(true)}
           >
             {localName || "Unnamed Field"}
           </span>
         )}
-        {isEditingValue ? (
+        <div className="flex items-center space-x-2">
           <Input
+            ref={valueInputRef}
             type={getInputType(field.type)}
             value={field.value}
             onChange={handleValueChange}
-            onBlur={handleValueBlur}
             placeholder="Field value"
             disabled={mode === "template"}
-            className="text-sm"
-            autoFocus
+            className="text-sm flex-grow"
           />
-        ) : (
-          <small
-            className={`cursor-pointer ${
-              mode === "template" ? "cursor-default" : ""
-            }`}
-            onClick={handleValueClick}
-          >
-            {field.value || "No value"}
-          </small>
-        )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" title="Change field type">
+                {getTypeIcon()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => handleFieldChange("type", "text")}
+              >
+                Text
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleFieldChange("type", "number")}
+              >
+                Number
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleFieldChange("type", "date")}
+              >
+                Date
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleFieldChange("type", "email")}
+              >
+                Email
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={addFieldToContent}
-        disabled={!localName.trim()}
-        title="Add field to content"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <MoreVertical className="h-5 w-5 text-gray-500" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64">
-          <DropdownMenuLabel>Field Settings</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <div className="p-2 space-y-3">
-            <div>
-              <Label htmlFor={`field-value-${index}`}>Value</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id={`field-value-${index}`}
-                  type={getInputType(field.type)}
-                  value={field.value}
-                  onChange={(e) => handleFieldChange("value", e.target.value)}
-                  placeholder="Field value"
-                  disabled={mode === "template"}
-                  className="flex-grow"
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Change field type"
-                    >
-                      {getTypeIcon()}
+      <div className="flex flex-col space-y-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-5 w-5 text-gray-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-64">
+            <DropdownMenuLabel>Field Settings</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="p-2 space-y-3">
+              {showOptions && (
+                <div>
+                  <Label>Options</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={optionInput}
+                      onChange={(e) => setOptionInput(e.target.value)}
+                      placeholder="Enter option"
+                    />
+                    <Button size="sm" onClick={addOption}>
+                      Add
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => handleFieldChange("type", "text")}
-                    >
-                      Text
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleFieldChange("type", "number")}
-                    >
-                      Number
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleFieldChange("type", "date")}
-                    >
-                      Date
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleFieldChange("type", "email")}
-                    >
-                      Email
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            <div>
-              <Label>Options</Label>
-              <div className="flex space-x-2">
-                <Input
-                  value={optionInput}
-                  onChange={(e) => setOptionInput(e.target.value)}
-                  placeholder="Enter option"
-                />
-                <Button size="sm" onClick={addOption}>
-                  Add
-                </Button>
-              </div>
-              {field.options.length > 0 && (
-                <div className="mt-2">
-                  {field.options.map((option, optionIndex) => (
-                    <div
-                      key={optionIndex}
-                      className="flex items-center justify-between text-sm bg-gray-100 p-1 rounded mb-1"
-                    >
-                      <span>{option}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeOption(optionIndex)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                  </div>
+                  {field.options.length > 0 && (
+                    <div className="mt-2">
+                      {field.options.map((option, optionIndex) => (
+                        <div
+                          key={optionIndex}
+                          className="flex items-center justify-between text-sm bg-gray-100 p-1 rounded mb-1"
+                        >
+                          <span>{option}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeOption(optionIndex)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
+              <div>
+                <Label htmlFor={`field-mapping-${index}`}>Mapping</Label>
+                <Input
+                  id={`field-mapping-${index}`}
+                  value={field.mapping}
+                  onChange={(e) => handleFieldChange("mapping", e.target.value)}
+                  placeholder="e.g. collaborator.name"
+                />
+              </div>
+              <DropdownMenuItem
+                onClick={onRemove}
+                className="text-red-500 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Field
+              </DropdownMenuItem>
             </div>
-            <div>
-              <Label htmlFor={`field-mapping-${index}`}>Mapping</Label>
-              <Input
-                id={`field-mapping-${index}`}
-                value={field.mapping}
-                onChange={(e) => handleFieldChange("mapping", e.target.value)}
-                placeholder="e.g. collaborator.name"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id={`field-required-${index}`}
-                checked={field.required}
-                onCheckedChange={(checked) =>
-                  handleFieldChange("required", checked)
-                }
-              />
-              <Label htmlFor={`field-required-${index}`}>Required</Label>
-            </div>
-            <DropdownMenuItem
-              onClick={onRemove}
-              className="text-red-500 cursor-pointer"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Field
-            </DropdownMenuItem>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={addFieldToContent}
+          disabled={!localName.trim()}
+          title="Add field to content"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

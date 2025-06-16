@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // Added useCallback
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,13 +16,18 @@ import { Color } from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
 import Blockquote from "@tiptap/extension-blockquote";
-import ContractEditorModal from "@/components/ContractEditorModal";
 import ContractSidebar from "@/components/ContractSidebar";
 import EditorToolbar from "@/components/EditorToolbar";
 import DummyContractData from "@/components/DummyContractData";
 import { Contract, Section, Field, Party, PartyField } from "@/types";
 import ContractPreview from "@/components/ContractPreview";
 import PlaceholderExtension from "./ui/PlaceholderExtension";
+import ContractMobileControls from "@/components/ContractMobileControls";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 type ContractEditorProps = {
   initialContract?: Contract | null;
@@ -57,15 +62,15 @@ const ContractEditor = ({
   });
   const [availableSections, setAvailableSections] = useState<Section[]>([]);
   const [activeTab, setActiveTab] = useState<"details" | "preview">("details");
-  const [modalTab, setModalTab] = useState<"sections" | "fields" | "parties">(
-    "sections"
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showTitleError, setShowTitleError] = useState(false);
+  const [editingField, setEditingField] = useState<{
+    name: string;
+    value: string;
+  } | null>(null);
   const isUpdatingFromEditor = useRef(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -79,7 +84,12 @@ const ContractEditor = ({
       FontFamily,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Blockquote,
-      PlaceholderExtension,
+      PlaceholderExtension.configure({
+        fields: contract.fields,
+        onEditField: (fieldName: string, currentValue: string) => {
+          setEditingField({ name: fieldName, value: currentValue });
+        },
+      }),
     ],
     content: contract.content,
     onUpdate: ({ editor }) => {
@@ -101,6 +111,23 @@ const ContractEditor = ({
     }
     isUpdatingFromEditor.current = false;
   }, [contract.content, editor]);
+
+  useEffect(() => {
+    if (editor && isEditorReady) {
+      console.log(
+        "Updating PlaceholderExtension with new fields:",
+        contract.fields
+      );
+      editor.extensionManager.extensions.forEach((extension) => {
+        if (extension.name === "placeholder") {
+          extension.options.fields = contract.fields;
+        }
+      });
+      editor.commands.setContent(editor.getHTML(), false, {
+        preserveWhitespace: true,
+      });
+    }
+  }, [contract.fields, editor, isEditorReady]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -162,7 +189,6 @@ const ContractEditor = ({
       options: [],
       value: "",
       mapping: "",
-      required: true,
     },
     {
       name: "amount",
@@ -170,7 +196,6 @@ const ContractEditor = ({
       options: [],
       value: "",
       mapping: "",
-      required: false,
     },
     {
       name: "email",
@@ -178,7 +203,6 @@ const ContractEditor = ({
       options: [],
       value: "",
       mapping: "",
-      required: false,
     },
   ];
 
@@ -195,6 +219,16 @@ const ContractEditor = ({
       fields[index] = updatedField;
       return { ...prev, fields };
     });
+  };
+
+  const handleEditField = (fieldName: string, newValue: string) => {
+    setContract((prev) => {
+      const fields = prev.fields.map((field) =>
+        field.name === fieldName ? { ...field, value: newValue } : field
+      );
+      return { ...prev, fields };
+    });
+    setEditingField(null);
   };
 
   const removeField = (index: number) => {
@@ -220,12 +254,10 @@ const ContractEditor = ({
         },
       ],
     }));
-    setIsModalOpen(false);
   };
 
   const addSuggestedField = (field: Field) => {
     setContract((prev) => ({ ...prev, fields: [...prev.fields, field] }));
-    setIsModalOpen(false);
   };
 
   const extractFieldsFromContent = (content: string) => {
@@ -263,7 +295,6 @@ const ContractEditor = ({
     if (editor) {
       editor.commands.insertContent(`<p>${section.content}</p>`);
     }
-    setIsModalOpen(false);
   };
 
   const updateAvailableSection = (
@@ -288,7 +319,6 @@ const ContractEditor = ({
         fields: [],
       },
     ]);
-    setIsModalOpen(false);
   };
 
   const addParty = () => {
@@ -304,7 +334,6 @@ const ContractEditor = ({
         },
       ],
     }));
-    setIsModalOpen(false);
   };
 
   const updateParty = (partyId: string, updatedParty: Partial<Party>) => {
@@ -338,7 +367,6 @@ const ContractEditor = ({
           : party
       ),
     }));
-    setIsModalOpen(false);
   };
 
   const updatePartyField = (
@@ -387,7 +415,90 @@ const ContractEditor = ({
     }));
   };
 
-  // Modified debounce function to include cancel method
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    console.log("Drag over editor");
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    console.log("Drop event triggered");
+    if (!editor) {
+      console.log("Editor not available");
+      return;
+    }
+
+    const fieldName = e.dataTransfer.getData("fieldName");
+    console.log("Field name from dataTransfer:", fieldName);
+    if (!fieldName) {
+      console.log("No field name provided");
+      return;
+    }
+
+    editor.chain().focus();
+
+    const rect = editorContainerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
+      console.log("Drop coordinates:", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        offsetX,
+        offsetY,
+      });
+
+      const position = editor.view.posAtCoords({
+        left: e.clientX,
+        top: e.clientY,
+      });
+      console.log("Position from posAtCoords:", position);
+
+      if (position) {
+        editor
+          .chain()
+          .focus()
+          .setTextSelection(position.pos)
+          .insertContent({
+            type: "placeholder",
+            attrs: { placeholder: fieldName },
+          })
+          .insertContent(" ")
+          .run();
+        console.log("Placeholder inserted at position:", position.pos);
+      } else {
+        console.log("Falling back to current cursor or end of content");
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "placeholder",
+            attrs: { placeholder: fieldName },
+          })
+          .insertContent(" ")
+          .run();
+      }
+    } else {
+      console.log("Editor container rect not found, using fallback");
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "placeholder",
+          attrs: { placeholder: fieldName },
+        })
+        .insertContent(" ")
+        .run();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && editingField) {
+      handleEditField(editingField.name, editingField.value);
+    }
+  };
+
   const debounce = <T extends (...args: unknown[]) => void>(
     func: T,
     delay: number
@@ -397,14 +508,14 @@ const ContractEditor = ({
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func(...args), delay);
     };
-    debounced.cancel = () => clearTimeout(timeoutId); // Added cancel method
+    debounced.cancel = () => clearTimeout(timeoutId);
     return debounced;
   };
 
   const saveContract = async () => {
     if (contract.title.trim() === "") {
       console.log("Cannot save: Title is empty");
-      setShowTitleError(true); // Added to show error if title is empty
+      setShowTitleError(true);
       return;
     }
     setIsSaving(true);
@@ -418,16 +529,14 @@ const ContractEditor = ({
     }
   };
 
-  // Moved debouncedSave outside useEffect and used useCallback
   const debouncedSave = useCallback(debounce(saveContract, 5000), [
     saveContract,
   ]);
 
-  // Updated useEffect to use stable debouncedSave
   useEffect(() => {
     debouncedSave();
     return () => {
-      debouncedSave.cancel(); // Cancel pending debounce on cleanup
+      debouncedSave.cancel();
     };
   }, [contract, debouncedSave]);
 
@@ -494,10 +603,14 @@ const ContractEditor = ({
                   <div>
                     <Label htmlFor="content">Content</Label>
                     <EditorToolbar editor={editor} />
-                    <EditorContent
-                      editor={editor}
-                      className="border rounded-md p-6 prose max-w-none"
-                    />
+                    <div ref={editorContainerRef}>
+                      <EditorContent
+                        editor={editor}
+                        className="border rounded-md p-6 prose max-w-none"
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -537,70 +650,72 @@ const ContractEditor = ({
       )}
 
       {activeTab === "details" && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t p-2 grid grid-cols-3 gap-2 sm:hidden z-40">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setModalTab("fields");
-              setIsModalOpen(true);
-            }}
-            aria-label="View Fields"
-          >
-            Fields
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setModalTab("sections");
-              setIsModalOpen(true);
-            }}
-            aria-label="View Sections"
-          >
-            Sections
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setModalTab("parties");
-              setIsModalOpen(true);
-            }}
-            aria-label="View Parties"
-          >
-            Parties
-          </Button>
-        </div>
+        <ContractMobileControls
+          contract={contract}
+          availableSections={availableSections}
+          suggestedFields={suggestedFields}
+          mode={mode}
+          editor={editor}
+          onContractChange={handleContractChange}
+          onFieldChange={handleFieldChange}
+          onRemoveField={removeField}
+          onAddField={addField}
+          onAddSuggestedField={addSuggestedField}
+          onAddSection={addSectionToContent}
+          onUpdateSection={updateAvailableSection}
+          onCreateSection={createNewSection}
+          onAddParty={addParty}
+          onUpdateParty={updateParty}
+          onRemoveParty={removeParty}
+          onAddPartyField={addPartyField}
+          onUpdatePartyField={updatePartyField}
+          onRemovePartyField={removePartyField}
+          onPartyTypeChange={handlePartyTypeChange}
+        />
       )}
 
-      <ContractEditorModal
-        isModalOpen={isModalOpen}
-        isDrawerOpen={isDrawerOpen}
-        activeTab={modalTab}
-        contract={contract}
-        availableSections={availableSections}
-        suggestedFields={suggestedFields}
-        mode={mode}
-        editor={editor}
-        onModalOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) setModalTab("sections");
-        }}
-        onDrawerOpenChange={setIsDrawerOpen}
-        onContractChange={handleContractChange}
-        onFieldChange={handleFieldChange}
-        onRemoveField={removeField}
-        onAddField={addField}
-        onAddSuggestedField={addSuggestedField}
-        onAddSection={addSectionToContent}
-        onUpdateSection={updateAvailableSection}
-        onCreateSection={createNewSection}
-        onAddParty={addParty}
-        onUpdateParty={updateParty}
-        onRemoveParty={removeParty}
-        onAddPartyField={addPartyField}
-        onUpdatePartyField={updatePartyField}
-        onRemovePartyField={removePartyField}
-        onPartyTypeChange={handlePartyTypeChange}
-      />
+      {editingField && (
+        <Popover
+          open={!!editingField}
+          onOpenChange={() => setEditingField(null)}
+        >
+          <PopoverTrigger asChild>
+            <span className="hidden" />
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="space-y-2">
+              <Label htmlFor="field-value">Edit {editingField.name}</Label>
+              <Input
+                id="field-value"
+                value={editingField.value}
+                onChange={(e) =>
+                  setEditingField({ ...editingField, value: e.target.value })
+                }
+                onKeyDown={handleKeyDown}
+                placeholder="Enter value"
+                autoFocus
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingField(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    handleEditField(editingField.name, editingField.value)
+                  }
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
 
       <Button
         onClick={saveContract}

@@ -76,7 +76,7 @@ const ContractSidebar = ({
   const [isSuggestedFieldsOpen, setIsSuggestedFieldsOpen] = useState(false);
 
   return (
-    <div className="w-80 h-full border-l bg-gray-50 p-4 min-w-[300px] flex flex-col overflow-y-hidden">
+    <div className="h-full p-4 min-w-[300px] flex flex-col overflow-y-hidden w-full">
       <Tabs defaultValue="fields" className="w-full flex-1 flex flex-col">
         {showTabs && (
           <TabsList className="grid w-full grid-cols-3 gap-2">
@@ -141,7 +141,6 @@ const ContractSidebar = ({
             </Button>
           </div>
           <div className="flex-1 flex flex-col min-h-0 space-y-3">
-            {/* Contract Fields Section with constrained height */}
             <div className="flex-1 min-h-0 max-h-[60vh]">
               <ScrollArea className="h-full">
                 <div className="space-y-3 pr-4">
@@ -164,7 +163,6 @@ const ContractSidebar = ({
               </ScrollArea>
             </div>
 
-            {/* Suggested Fields Section with constrained height */}
             <div className="border-t pt-3 bg-gray-50 max-h-[30vh] flex flex-col">
               <Collapsible
                 open={isSuggestedFieldsOpen}

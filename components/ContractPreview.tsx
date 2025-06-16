@@ -15,28 +15,59 @@ type ContractPreviewProps = {
 
 const ExportToPDF = ({
   contentRef,
-  content,
+  contract,
 }: {
   contentRef: React.RefObject<HTMLDivElement>;
-  content: string;
+  contract: Contract;
 }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleExportToPDF = async () => {
     setError(null);
-    if (!contentRef.current) return;
+    if (!contentRef.current || !contract.content) return;
 
-    const hasInvalidSpans =
-      /<span[^>]*class="[^"]*inline-block[^"]*bg-blue-100[^"]*text-blue-800[^"]*"[^>]*>/i.test(
-        content
+    const placeholderRegex = /<span\s*data-placeholder="([^"]+)"[^>]*>/g;
+    const usedFieldNames = new Set<string>();
+    let match;
+    while ((match = placeholderRegex.exec(contract.content))) {
+      if (match[1]) {
+        usedFieldNames.add(match[1]);
+      }
+    }
+
+    const missingFields = Array.from(usedFieldNames).filter((fieldName) => {
+      const field = contract.fields.find((f) => f.name === fieldName);
+      return !field || !field.value.trim();
+    });
+
+    if (missingFields.length > 0) {
+      setError(
+        `The following placeholders are missing values: ${missingFields.join(
+          ", "
+        )}.`
       );
-    if (hasInvalidSpans) {
-      setError("All placeholders must be filled before exporting to PDF.");
       return;
     }
 
     try {
-      const canvas = await html2canvas(contentRef.current, {
+      const tempDiv = document.createElement("div");
+      tempDiv.className = "prose max-w-none leading-normal";
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      document.body.appendChild(tempDiv);
+
+      const cleanedContent = contract.content.replace(
+        /<span\s*(?:data-placeholder="([^"]+)")?\s*(?:class="[^"]*")?>[^<]*<\/span>/g,
+        (match, fieldName) => {
+          const field = contract.fields.find((f) => f.name === fieldName);
+          const displayText = field?.value || fieldName || "";
+          return `<span>${displayText}</span>`;
+        }
+      );
+
+      tempDiv.innerHTML = cleanedContent;
+
+      const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
         logging: false,
@@ -69,6 +100,8 @@ const ExportToPDF = ({
           "contract"
         }.pdf`
       );
+
+      document.body.removeChild(tempDiv);
     } catch (error) {
       console.error("Error generating PDF:", error);
       setError("An error occurred while generating the PDF.");
@@ -130,7 +163,7 @@ export default function ContractPreview({
                   __html: processedContent,
                 }}
               />
-              <ExportToPDF contentRef={contentRef} content={processedContent} />
+              <ExportToPDF contentRef={contentRef} contract={contract} />
             </>
           ) : (
             <p>No content available.</p>
