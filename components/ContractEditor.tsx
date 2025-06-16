@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Heading from "@tiptap/extension-heading";
@@ -278,23 +279,25 @@ const ContractEditor = ({
     const sectionFields = extractFieldsFromContent(section.content);
     const newFields = sectionFields
       .filter((fieldName) => !contract.fields.some((f) => f.name === fieldName))
-      .map((fieldName) => ({
-        name: fieldName,
-        type: "text",
-        options: [],
-        value: "",
-        mapping: "",
-        required: false,
-      }));
+      .map((fieldName) => {
+        const existingField = section.fields?.find((f) => f.name === fieldName);
+        return (
+          existingField || {
+            name: fieldName,
+            type: "text",
+            options: [],
+            value: "",
+            mapping: "",
+            required: false,
+          }
+        );
+      });
     setContract((prev) => ({
       ...prev,
       content: newContent,
       sections: [...prev.sections, section],
       fields: [...prev.fields, ...newFields],
     }));
-    if (editor) {
-      editor.commands.insertContent(`<p>${section.content}</p>`);
-    }
   };
 
   const updateAvailableSection = (
@@ -429,16 +432,8 @@ const ContractEditor = ({
       return;
     }
 
-    const fieldName = e.dataTransfer.getData("fieldName");
-    console.log("Field name from dataTransfer:", fieldName);
-    if (!fieldName) {
-      console.log("No field name provided");
-      return;
-    }
-
-    editor.chain().focus();
-
     const rect = editorContainerRef.current?.getBoundingClientRect();
+    let position = null;
     if (rect) {
       const offsetX = e.clientX - rect.left;
       const offsetY = e.clientY - rect.top;
@@ -448,49 +443,53 @@ const ContractEditor = ({
         offsetX,
         offsetY,
       });
-
-      const position = editor.view.posAtCoords({
-        left: e.clientX,
-        top: e.clientY,
-      });
+      position = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
       console.log("Position from posAtCoords:", position);
+    }
 
-      if (position) {
-        editor
-          .chain()
-          .focus()
-          .setTextSelection(position.pos)
-          .insertContent({
-            type: "placeholder",
-            attrs: { placeholder: fieldName },
-          })
-          .insertContent(" ")
-          .run();
-        console.log("Placeholder inserted at position:", position.pos);
-      } else {
-        console.log("Falling back to current cursor or end of content");
-        editor
-          .chain()
-          .focus()
-          .insertContent({
-            type: "placeholder",
-            attrs: { placeholder: fieldName },
-          })
-          .insertContent(" ")
-          .run();
+    // Handle section drop
+    const sectionId = e.dataTransfer.getData("sectionId");
+    if (sectionId) {
+      console.log("Section dropped:", sectionId);
+      const section = availableSections.find((s) => s.id === sectionId);
+      if (!section) {
+        console.log("Section not found");
+        return;
       }
-    } else {
-      console.log("Editor container rect not found, using fallback");
+
+      let insertPos = position?.pos ?? editor.state.doc.content.size;
       editor
         .chain()
-        .focus()
-        .insertContent({
-          type: "placeholder",
-          attrs: { placeholder: fieldName },
-        })
-        .insertContent(" ")
+        .setTextSelection(insertPos)
+        .insertContent(`<p>${section.content}</p>`)
+        .setTextSelection(insertPos + section.content.length + 7) // Account for <p> and </p> tags
         .run();
+      console.log("Section content inserted at position:", insertPos);
+
+      addSectionToContent(section);
+      return;
     }
+
+    // Handle field drop
+    const fieldName = e.dataTransfer.getData("fieldName");
+    console.log("Field name from dataTransfer:", fieldName);
+    if (!fieldName) {
+      console.log("No field name or section id provided");
+      return;
+    }
+
+    let insertPos = position?.pos ?? editor.state.doc.content.size;
+    editor
+      .chain()
+      .setTextSelection(insertPos)
+      .insertContent({
+        type: "placeholder",
+        attrs: { placeholder: fieldName },
+      })
+      .insertContent(" ")
+      .setTextSelection(insertPos + fieldName.length + 1) // Account for placeholder length + space
+      .run();
+    console.log("Placeholder inserted at position:", insertPos);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -599,6 +598,18 @@ const ContractEditor = ({
                         Title is required for saving
                       </p>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={contract.description}
+                      onChange={(e) =>
+                        handleContractChange("description", e.target.value)
+                      }
+                      placeholder="Contract description"
+                      className="min-h-[100px]"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="content">Content</Label>
