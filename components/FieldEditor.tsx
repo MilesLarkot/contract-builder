@@ -182,6 +182,7 @@ const FieldEditor = ({
       onDragStart={handleDragStart}
     >
       <div className={`w-3 h-3 rounded-full mr-2 ${getCircleStyles()}`} />
+
       <div className="flex flex-col flex-grow">
         {isEditing ? (
           <Input

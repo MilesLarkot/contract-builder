@@ -119,25 +119,6 @@ const ContractSidebar = ({
                   mode={mode}
                 />
               ))}
-              {suggestedFields.length > 0 && (
-                <div className="mt-2">
-                  <h4 className="text-sm font-medium mb-1">Suggested Fields</h4>
-                  <div className="space-y-1">
-                    {suggestedFields.map((field, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-left"
-                        onClick={() => onAddSuggestedField(field)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        {field.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </TabsContent>
           <TabsContent value="sections" className="mt-4">
@@ -323,6 +304,25 @@ const ContractSidebar = ({
             </div>
           </TabsContent>
         </div>
+        {suggestedFields.length > 0 && (
+          <div className="mt-2 h-[250px] overflow-auto border-t-2 pt-2">
+            <h4 className="text-sm font-medium mb-1">Suggested Fields</h4>
+            <div className="space-y-1">
+              {suggestedFields.map((field, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-left"
+                  onClick={() => onAddSuggestedField(field)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {field.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </Tabs>
     </div>
   );

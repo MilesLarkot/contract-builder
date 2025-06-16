@@ -112,7 +112,7 @@ const ContractEditor = ({
       setIsEditorReady(true);
     }
     isUpdatingFromEditor.current = false;
-  }, [contract.content, editor]);
+  }, [contract.content, editor, contract.fields]);
 
   useEffect(() => {
     if (editor && isEditorReady) {
@@ -274,10 +274,11 @@ const ContractEditor = ({
 
   const addSectionToContent = (section: Section) => {
     if (!section.content.trim()) return;
+    const normalizedSectionContent = normalizeContent(section.content);
     const newContent = contract.content
-      ? `${contract.content}<p>${section.content}</p>`
-      : `<p>${section.content}</p>`;
-    const sectionFields = extractFieldsFromContent(section.content);
+      ? `${contract.content}<p>${normalizedSectionContent}</p>`
+      : `<p>${normalizedSectionContent}</p>`;
+    const sectionFields = extractFieldsFromContent(normalizedSectionContent);
     const newFields = sectionFields
       .filter((fieldName) => !contract.fields.some((f) => f.name === fieldName))
       .map((fieldName) => {
@@ -289,7 +290,6 @@ const ContractEditor = ({
             options: [],
             value: "",
             mapping: "",
-            required: false,
           }
         );
       });
@@ -448,7 +448,6 @@ const ContractEditor = ({
       console.log("Position from posAtCoords:", position);
     }
 
-    // Handle section drop
     const sectionId = e.dataTransfer.getData("sectionId");
     if (sectionId) {
       console.log("Section dropped:", sectionId);
@@ -458,12 +457,13 @@ const ContractEditor = ({
         return;
       }
 
+      const normalizedSectionContent = normalizeContent(section.content);
       const insertPos = position?.pos ?? editor.state.doc.content.size;
       editor
         .chain()
         .setTextSelection(insertPos)
-        .insertContent(`<p>${section.content}</p>`)
-        .setTextSelection(insertPos + section.content.length + 7)
+        .insertContent(`<p>${normalizedSectionContent}</p>`)
+        .setTextSelection(insertPos + normalizedSectionContent.length + 7)
         .run();
       console.log("Section content inserted at position:", insertPos);
 
@@ -544,7 +544,7 @@ const ContractEditor = ({
   }
 
   return (
-    <div className="flex h-full flex-col sm:flex-row">
+    <div className="flex h-full flex-col sm:flex-row w-full">
       <div
         className={`flex-grow p-6 ${
           activeTab === "details"
