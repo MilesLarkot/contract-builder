@@ -17,7 +17,6 @@ export interface PartyField {
   name: string;
   type: string;
   value: string;
-  required: boolean;
 }
 
 export interface Party {

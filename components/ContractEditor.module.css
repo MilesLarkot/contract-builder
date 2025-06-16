@@ -26,5 +26,5 @@
 
 .editor-wrapper:focus-within {
   outline: none;
-  border: 1px solid transparent; /* Keep the border but make it transparent */
+  border: 1px solid transparent;
 }

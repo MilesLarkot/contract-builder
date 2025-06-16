@@ -86,7 +86,7 @@ const PlaceholderExtension = Node.create<PlaceholderOptions>({
   },
 
   addNodeView() {
-    return ({ node, editor }) => {
+    return ({ node }) => {
       const placeholder = node.attrs.placeholder;
       if (!placeholder) return { dom: document.createElement("span") };
 

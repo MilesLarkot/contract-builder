@@ -20,7 +20,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "",
-      required: true,
     },
     {
       name: "clientName",
@@ -28,7 +27,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "client.name",
-      required: true,
     },
     {
       name: "providerName",
@@ -36,7 +34,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "provider.name",
-      required: true,
     },
     {
       name: "totalFee",
@@ -44,7 +41,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "",
-      required: true,
     },
     {
       name: "startDate",
@@ -52,7 +48,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "",
-      required: true,
     },
     {
       name: "endDate",
@@ -60,7 +55,6 @@ const DummyContractData: Contract = {
       options: [],
       value: "",
       mapping: "",
-      required: true,
     },
     {
       name: "paymentMethod",
@@ -68,7 +62,6 @@ const DummyContractData: Contract = {
       options: ["Bank Transfer", "Credit Card", "PayPal"],
       value: "",
       mapping: "",
-      required: false,
     },
   ],
   sections: [
@@ -84,7 +77,6 @@ const DummyContractData: Contract = {
           options: [],
           value: "",
           mapping: "client.name",
-          required: true,
         },
         {
           name: "providerName",
@@ -92,7 +84,6 @@ const DummyContractData: Contract = {
           options: [],
           value: "",
           mapping: "provider.name",
-          required: true,
         },
       ],
     },
@@ -108,7 +99,6 @@ const DummyContractData: Contract = {
           options: [],
           value: "",
           mapping: "",
-          required: true,
         },
         {
           name: "endDate",
@@ -116,7 +106,6 @@ const DummyContractData: Contract = {
           options: [],
           value: "",
           mapping: "",
-          required: true,
         },
       ],
     },
@@ -131,13 +120,11 @@ const DummyContractData: Contract = {
           name: "clientName",
           type: "text",
           value: "",
-          required: true,
         },
         {
           name: "clientAddress",
           type: "text",
           value: "",
-          required: false,
         },
       ],
     },
@@ -150,13 +137,11 @@ const DummyContractData: Contract = {
           name: "providerName",
           type: "text",
           value: "",
-          required: true,
         },
         {
           name: "providerEmail",
           type: "email",
           value: "",
-          required: false,
         },
       ],
     },

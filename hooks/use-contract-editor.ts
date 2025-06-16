@@ -73,7 +73,6 @@ const useContractEditor = ({
               options: [],
               value: "",
               mapping: "collaborator.name",
-              required: true,
             },
             {
               name: "party2",
@@ -81,7 +80,6 @@ const useContractEditor = ({
               options: [],
               value: "",
               mapping: "",
-              required: true,
             },
           ],
         },
@@ -97,7 +95,6 @@ const useContractEditor = ({
               options: [],
               value: "",
               mapping: "",
-              required: true,
             },
           ],
         },
@@ -130,7 +127,6 @@ const useContractEditor = ({
       options: [],
       value: "",
       mapping: "",
-      required: false,
     };
     setContract((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
     setIsModalOpen(false);
@@ -185,7 +181,6 @@ const useContractEditor = ({
         options: [],
         value: "",
         mapping: "",
-        required: false,
       }));
     setContract((prev) => ({
       ...prev,
@@ -226,9 +221,7 @@ const useContractEditor = ({
       id: `party-${Date.now()}`,
       name: "",
       type: "company",
-      fields: [
-        { name: "CompanyName", type: "text", value: "", required: true },
-      ],
+      fields: [{ name: "CompanyName", type: "text", value: "" }],
     };
     setContract((prev) => ({ ...prev, parties: [...prev.parties, newParty] }));
     setIsModalOpen(false);
@@ -309,7 +302,6 @@ const useContractEditor = ({
                       name: "CompanyName",
                       type: "text",
                       value: "",
-                      required: true,
                     },
                   ]
                 : [
@@ -317,13 +309,11 @@ const useContractEditor = ({
                       name: "FirstName",
                       type: "text",
                       value: "",
-                      required: true,
                     },
                     {
                       name: "LastName",
                       type: "text",
                       value: "",
-                      required: true,
                     },
                   ],
           }

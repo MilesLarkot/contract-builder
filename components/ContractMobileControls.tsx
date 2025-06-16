@@ -124,7 +124,6 @@ const ContractMobileControls = ({
               onUpdatePartyField={onUpdatePartyField}
               onRemovePartyField={onRemovePartyField}
               onPartyTypeChange={onPartyTypeChange}
-              showTabs={false}
             />
           </div>
         </DrawerContent>

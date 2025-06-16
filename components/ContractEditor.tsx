@@ -29,6 +29,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import "@/components/ContractEditor.module.css";
 
 type ContractEditorProps = {
   initialContract?: Contract | null;
@@ -457,12 +458,12 @@ const ContractEditor = ({
         return;
       }
 
-      let insertPos = position?.pos ?? editor.state.doc.content.size;
+      const insertPos = position?.pos ?? editor.state.doc.content.size;
       editor
         .chain()
         .setTextSelection(insertPos)
         .insertContent(`<p>${section.content}</p>`)
-        .setTextSelection(insertPos + section.content.length + 7) // Account for <p> and </p> tags
+        .setTextSelection(insertPos + section.content.length + 7)
         .run();
       console.log("Section content inserted at position:", insertPos);
 
@@ -470,7 +471,6 @@ const ContractEditor = ({
       return;
     }
 
-    // Handle field drop
     const fieldName = e.dataTransfer.getData("fieldName");
     console.log("Field name from dataTransfer:", fieldName);
     if (!fieldName) {
@@ -478,7 +478,7 @@ const ContractEditor = ({
       return;
     }
 
-    let insertPos = position?.pos ?? editor.state.doc.content.size;
+    const insertPos = position?.pos ?? editor.state.doc.content.size;
     editor
       .chain()
       .setTextSelection(insertPos)
@@ -487,7 +487,7 @@ const ContractEditor = ({
         attrs: { placeholder: fieldName },
       })
       .insertContent(" ")
-      .setTextSelection(insertPos + fieldName.length + 1) // Account for placeholder length + space
+      .setTextSelection(insertPos + fieldName.length + 1)
       .run();
     console.log("Placeholder inserted at position:", insertPos);
   };
@@ -584,7 +584,9 @@ const ContractEditor = ({
               <CardContent>
                 <div className="space-y-4 mt-3">
                   <div>
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="title">
+                      <b>Title</b>
+                    </Label>
                     <Input
                       id="title"
                       value={contract.title}
@@ -600,7 +602,9 @@ const ContractEditor = ({
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">
+                      <b>Description</b>
+                    </Label>
                     <Textarea
                       id="description"
                       value={contract.description}
@@ -608,11 +612,13 @@ const ContractEditor = ({
                         handleContractChange("description", e.target.value)
                       }
                       placeholder="Contract description"
-                      className="min-h-[100px]"
+                      className=""
                     />
                   </div>
                   <div>
-                    <Label htmlFor="content">Content</Label>
+                    <Label htmlFor="content">
+                      <b>Content</b>
+                    </Label>
                     <EditorToolbar editor={editor} />
                     <div ref={editorContainerRef}>
                       <EditorContent

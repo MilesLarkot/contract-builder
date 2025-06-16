@@ -159,7 +159,7 @@ const FieldEditor = ({
   };
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+    const value = e.target.value;
     if (field.type === "number" && value !== "") {
       if (!/^-?\d*\.?\d*$/.test(value)) {
         return;
